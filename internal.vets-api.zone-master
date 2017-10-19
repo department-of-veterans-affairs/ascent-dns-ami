@@ -1,5 +1,5 @@
 $TTL 86400
-@   IN  SOA     ns1.internal.vets-api. root.internal.vets-api (
+@   IN  SOA     ns1.internal.vets-api.gov. root.internal.vets-api.gov (
         0123456789  ;Serial
         3600        ;Refresh
         1800        ;Retry
@@ -8,8 +8,8 @@ $TTL 86400
 )
 
 ; Specify our two nameservers
-                IN      NS              ns1.internal.vets-api.
-                IN      NS              ns2.internal.vets-api.
+                IN      NS              ns1.internal.vets-api.gov.
+                IN      NS              ns2.internal.vets-api.gov.
 
 ; Resolve nameserver hostnames to IP
 ns1             IN      A               0.0.0.0

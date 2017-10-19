@@ -50,7 +50,7 @@ zone "." IN {
 };
 
 
-zone "internal.vets-api" IN {
+zone "internal.vets-api.gov" IN {
         type slave;
         file "/var/named/slaves/internal.vets-api3.zone-slave";
         masters { IP; };

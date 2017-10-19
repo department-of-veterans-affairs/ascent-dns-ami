@@ -50,7 +50,7 @@ zone "." IN {
         forward only;
 };
 
-zone "internal.vets-api" IN {
+zone "internal.vets-api.gov" IN {
         type master;
         file "/var/named/dynamic/internal.vets-api.zone-master";
         allow-update { 10.247.81.0/24;10.247.80.0/24;127.0.0.1; };

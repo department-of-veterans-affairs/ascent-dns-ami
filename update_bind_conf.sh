@@ -33,10 +33,10 @@ echo $SERIAL
 sed -i -e 's/0123456789/'$SERIAL'/g' /root/internal.vets-api.zone-master
 
 #freeze the zone so we can manually update the zone config
-rndc freeze internal.vets-api.
+rndc freeze internal.vets-api.gov.
 
 #copy updated zone config to dynamic folder so bind will pick it up
 cp /root/internal.vets-api.zone-master /var/named/dynamic/
 
 #thaw the zone to allow dynamic updates again
-rndc thaw internal.vets-api.
+rndc thaw internal.vets-api.gov.
