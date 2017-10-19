@@ -17,5 +17,4 @@ ns2             IN      A               0.0.0.0
 
 ; Define hostname -> IP pairs which you wish to resolve
 @               IN      A               0.0.0.0
-jenkins         IN      CNAME           ip-172-31-31-56.ec2.internal.
-
+jenkins         IN      CNAME           ip-10-247-81-51.us-gov-west-1.compute.internal.

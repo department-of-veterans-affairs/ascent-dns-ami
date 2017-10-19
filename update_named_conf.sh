@@ -31,7 +31,8 @@ else
   fi
 
   #update dhcp address and restart network
-  sudo sed -i '$a supersede domain-name-servers 127.0.0.1;' /etc/dhcp/dhclient.conf
+  #sudo sed -i '$a supersede domain-name-servers 127.0.0.1;' /etc/dhcp/dhclient.conf
+  echo "supersede domain-name-servers 127.0.0.1;" >> /etc/dhcp/dhclient.conf
   sudo /etc/init.d/network restart
 fi
 
