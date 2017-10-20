@@ -15,7 +15,7 @@ else
 
   echo $TYPE
   #update root cron to run script for updating bind entires every night at 2:30AM
-  sudo sh -c "echo '30 2 * * * /root/update_bind_conf.sh' >> /var/spool/cron/root"
+  sudo sh -c "echo '30 2 * * * /root/update_bind_conf.sh >> /root/update_bind_conf.log' >> /var/spool/cron/root"
   
   if [ $TYPE == 'dns_master' ]
   then
