@@ -23,7 +23,7 @@ else
   else
      echo 'copy slave conf'
      sudo cp /root/named.conf-slave /etc/named.conf
-     MASTER_INSTANCE_ID=`aws --output text --region $AWS_REGION ec2 describe-tags --filters 'Name=tag:Type,Values=master' | awk '{print $3}'`
+     MASTER_INSTANCE_ID=`aws --output text --region $AWS_REGION ec2 describe-tags --filters 'Name=tag:Type,Values=dns_master' | awk '{print $3}'`
      SERVER_IP=`aws ec2 describe-instances --instance-id $MASTER_INSTANCE_ID --region $AWS_REGION | jq .Reservations[].Instances[].PrivateIpAddress |sed 's/\"//g'`
      sed -i -e 's/IP/'$SERVER_IP'/g' /etc/named.conf
      sudo cp /root/internal.vets-api.zone-slave /var/named/dynamic/internal.vets-api.zone-slave
