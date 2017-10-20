@@ -14,7 +14,9 @@ else
   TYPE=`aws --output text --region $AWS_REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=tag:Type,Values=*" | awk '{print $5}'`
 
   echo $TYPE
-
+  #update root cron to run script for updating bind entires every night at 2:30AM
+  sudo sh -c "echo '30 2 * * * /root/update_bind_conf.sh' >> /var/spool/cron/root"
+  
   if [ $TYPE == 'dns_master' ]
   then
      echo 'copy master conf'
