@@ -14,14 +14,15 @@ else
   TYPE=`aws --output text --region $AWS_REGION ec2 describe-tags --filters "Name=resource-id,Values=$INSTANCE_ID" "Name=tag:Type,Values=*" | awk '{print $5}'`
 
   echo $TYPE
-  #update root cron to run script for updating bind entires every night at 2:30AM
-  sudo sh -c "echo '30 2 * * * /root/update_bind_conf.sh >> /root/update_bind_conf.log' >> /var/spool/cron/root"
   
   if [ $TYPE == 'dns_master' ]
   then
      echo 'copy master conf'
      sudo cp /root/named.conf-master /etc/named.conf
      sudo cp /root/internal.vets-api.zone-master /var/named/dynamic/internal.vets-api.zone-master
+     #update root cron to run script for updating bind entires every night at 2:30AM
+      sudo sh -c "echo '30 2 * * * /root/update_bind_conf.sh >> /root/update_bind_conf.log' >> /var/spool/cron/root"
+
   else
      echo 'copy slave conf'
      sudo cp /root/named.conf-slave /etc/named.conf
