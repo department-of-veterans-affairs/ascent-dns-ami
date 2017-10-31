@@ -1,7 +1,0 @@
-{
- "aws_access_key": "AKIALBVGUSHB5YNBK3WA",
- "aws_secret_key": "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",
- "aws_region": "us-gov-west-1",
- "iam_instance_profile_name": "aws_dns",
- "base_ami_id": "ami-1fbe067e"
-}
