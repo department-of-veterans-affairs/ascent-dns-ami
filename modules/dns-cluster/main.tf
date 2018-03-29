@@ -14,7 +14,7 @@ resource "aws_instance" "master" {
   instance_type               = "${var.instance_type}"
   ami                         = "${var.ami_id}"
   key_name                    = "${var.ssh_key_name}"
-  subnet_id                   = "${var.subnet_ids[var.subnet_ids.length - 1]}"
+  subnet_id                   = "${var.subnet_ids[length(var.subnet_ids) - 1]}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]

@@ -28,6 +28,11 @@ variable "user_data" {
   description = "A User Data script to execute while the server is booting. We remmend passing in a bash script that executes the run-dns script, which should have been installed in the DNS AMI."
 }
 
+variable "subnet_ids" {
+  description = "The subnet IDs into which the EC2 Instances should be deployed. We recommend one subnet ID per node in the slave_size variable. At least one of var.subnet_ids or var.availability_zones must be non-empty."
+  type        = "list"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # OPTIONAL PARAMETERS
 # These parameters have reasonable defaults.
@@ -36,18 +41,6 @@ variable "user_data" {
 variable "slave_size" {
   description = "The number of slave nodes to have in the DNS cluster. We strongly recommended that you use at least 1."
   default     = 1
-}
-
-variable "subnet_ids" {
-  description = "The subnet IDs into which the EC2 Instances should be deployed. We recommend one subnet ID per node in the slave_size variable. At least one of var.subnet_ids or var.availability_zones must be non-empty."
-  type        = "list"
-  default     = []
-}
-
-variable "availability_zones" {
-  description = "The availability zones into which the EC2 Instances should be deployed. We recommend one availability zone per node in the slave_size variable. At least one of var.subnet_ids or var.availability_zones must be non-empty."
-  type        = "list"
-  default     = []
 }
 
 variable "ssh_key_name" {
