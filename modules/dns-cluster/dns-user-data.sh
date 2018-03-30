@@ -7,4 +7,4 @@ set -e
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 # The variables below are filled in via Terraform interpolation
-/opt/dns/run-dns ${master == "" ? "" : "--master"} --dns-zone "${dns_zone}" --forward-dns-servers "${forward_dns_servers}" --query-cidrs "${query-cidrs}" --zone-update-cidrs "${zone-update-cidrs}"
+sudo /opt/dns/run-dns ${master == "" ? "" : "--master"} --dns-zone "${dns_zone}" --forward-dns-servers "${forward_dns_servers}" --query-cidrs "${query_cidrs}" --zone-update-cidrs "${zone_update_cidrs}"

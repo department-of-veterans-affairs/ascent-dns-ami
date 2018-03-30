@@ -9,7 +9,7 @@ resource "aws_security_group_rule" "allow_dns_upd_inbound" {
   type        = "ingress"
   from_port   = "${var.dns_port}"
   to_port     = "${var.dns_port}"
-  protocol    = "upd"
+  protocol    = "udp"
   cidr_blocks = ["${var.allowed_inbound_cidr_blocks}"]
 
   security_group_id = "${var.security_group_id}"

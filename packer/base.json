@@ -20,7 +20,7 @@
       "ssh_username": "ec2-user",
       "ssh_pty": true,
       "associate_public_ip_address": true,
-      "ami_name": "ascent-dns-{{user `ami_version`}}",
+      "ami_name": "dns-{{user `ami_version`}}",
       "source_ami_filter": {
         "filters": {
           "name": "ascent-base-{{user `base_ami_version`}}"
@@ -36,14 +36,22 @@
         }
       ],
       "tags": {
-        "Name": "dns-ascent"
+        "Name": "dns-{{user `ami_version`}}"
       },
       "snapshot_tags": {
-        "Name": "dns-ascent"
+        "Name": "dns-{{user `ami_version`}}"
       }
     }
   ],
   "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+          "sudo yum -y install bind bind-utils",
+          "sudo systemctl enable named",
+          "mkdir -p /tmp/dns-scripts"
+      ]
+    },
     {
       "type": "file",
       "source": "scripts/",
@@ -54,7 +62,7 @@
       "inline": [
           "sudo mv /tmp/dns-scripts /opt/dns",
           "sudo chown -R root:root /opt/dns",
-          "sudo chmod -R 644 /opt/dns"
+          "sudo chmod -R 755 /opt/dns"
       ]
     }
   ]

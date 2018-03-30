@@ -97,7 +97,7 @@ function configure_named_master {
   local readonly forward_dns_server="$2"
   local readonly query_cidrs="$3"
   local readonly zone_update_cidrs="$4"
-  local readonly serial=`date "+%Y%m%d%H%M%S"`
+  local readonly serial=`date "+%Y%m%d"`
 
   log_info "Configuring Master DNS Server"
   cat > '/etc/named.conf' <<EOF
@@ -145,7 +145,7 @@ EOF
 
 #
 cat > "/var/named/dynamic/$zone.zone-master" <<EOF
-$TTL 86400
+\$TTL 86400
 @   IN  SOA     ns1.$zone. root.$zone (
         $serial     ;Serial
         3600        ;Refresh
@@ -178,6 +178,7 @@ function run {
   local forward_dns_servers=""
   local query_cidrs=""
   local zone_update_cidrs=""
+  local master="false"
   local all_args=()
 
   while [[ $# > 0 ]]; do
@@ -203,6 +204,9 @@ function run {
         assert_not_empty "$key" "$2"
         zone_update_cidrs="$2"
         shift
+        ;;
+      --master)
+        master="true"
         ;;
       --help)
         print_usage
@@ -230,14 +234,10 @@ function run {
     log_error "--query-cidrs parameter must be set."
     exit 1
   fi
-  if [[ -z "$zone_update_cidrs" ]]; then
-    log_error "--zone-update-cidrs parameter must be set."
-    exit 1
-  fi
 
-  assert_is_installed "aws"
-  assert_is_installed "curl"
-  assert_is_installed "jq"
+  #assert_is_installed "aws"
+  #assert_is_installed "curl"
+  #assert_is_installed "jq"
 
   configure_named_master "$zone" "$forward_dns_servers" "$query_cidrs" "$zone_update_cidrs"
   update_dhcp

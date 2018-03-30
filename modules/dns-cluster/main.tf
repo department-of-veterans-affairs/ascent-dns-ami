@@ -18,15 +18,11 @@ resource "aws_instance" "master" {
   associate_public_ip_address = "${var.associate_public_ip_address}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
-  user_data                   = ["${var.user_data == "" ? template_file.master_user_data.rendered : var.user_data}"]
+  user_data                   = "${var.user_data == "" ? data.template_file.master_user_data.rendered : var.user_data}"
 
-  tags [
-    {
-      key   = "Name"
-      value = "${var.cluster-name}-master"
-    }
-    "${var.tags}",
-  ]
+  tags {
+      Name = "${var.cluster_name}-master"
+  }
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -96,8 +92,8 @@ data "template_file" "master_user_data" {
     master              = true
     dns_zone            = "${var.dns_zone}"
     forward_dns_servers = "${var.forward_dns_servers}"
-    query-cidrs         = "${var.query-cidrs}"
-    zone-update-cidrs   = "${var.zone-update-cidrs}"
+    query_cidrs         = "${var.query_cidrs}"
+    zone_update_cidrs   = "${var.zone_update_cidrs}"
   }
 }
 
@@ -105,9 +101,10 @@ data "template_file" "slave_user_data" {
   template = "${file("${path.module}/dns-user-data.sh")}"
 
   vars {
+    master              = ""
     dns_zone            = "${var.dns_zone}"
     forward_dns_servers = "${var.forward_dns_servers}"
-    query-cidrs         = "${var.query-cidrs}"
-    zone-update-cidrs   = "${var.zone-update-cidrs}"
+    query_cidrs         = "${var.query_cidrs}"
+    zone_update_cidrs   = "${var.zone_update_cidrs}"
   }
 }
