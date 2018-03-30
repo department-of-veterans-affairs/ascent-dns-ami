@@ -108,7 +108,7 @@ options {
         dump-file       "/var/named/data/cache_dump.db";
         statistics-file "/var/named/data/named_stats.txt";
         memstatistics-file "/var/named/data/named_mem_stats.txt";
-        allow-query     { $query_cidrs;127.0.0.1; };
+        allow-query     { 127.0.0.1;$query_cidrs };
         also-notify { };
 
         recursion yes;
@@ -139,7 +139,7 @@ zone "." IN {
 zone "$zone" IN {
         type master;
         file "/var/named/dynamic/$zone.zone-master";
-        allow-update { $zone_update_cidrs;127.0.0.1; };
+        allow-update { 127.0.0.1;$zone_update_cidrs };
 };
 EOF
 
