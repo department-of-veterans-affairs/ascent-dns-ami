@@ -201,7 +201,6 @@ function run {
         shift
         ;;
       --zone-update-cidrs)
-        assert_not_empty "$key" "$2"
         zone_update_cidrs="$2"
         shift
         ;;
