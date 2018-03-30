@@ -165,6 +165,9 @@ ns2             IN      A               0.0.0.0
 ; Define hostname -> IP pairs which you wish to resolve
 @               IN      A               0.0.0.0
 EOF
+
+  #Restart named service
+  sudo systemctl restart named.service
 }
 
 function update_dhcp {
