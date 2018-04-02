@@ -25,6 +25,22 @@ resource "aws_instance" "master" {
   }
 }
 
+resource "aws_instance" "slave" {
+  count                       = "${var.slave_size}"
+  instance_type               = "${var.instance_type}"
+  ami                         = "${var.ami_id}"
+  key_name                    = "${var.ssh_key_name}"
+  subnet_id                   = "${var.subnet_ids[count.index]}"
+  associate_public_ip_address = "${var.associate_public_ip_address}"
+
+  vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
+  user_data                   = "${var.user_data == "" ? data.template_file.slave_user_data.rendered : var.user_data}"
+
+  tags {
+      Name = "${var.cluster_name}-slave${count.index}"
+  }
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Control Traffic to DNS instances
 # ---------------------------------------------------------------------------------------------------------------------
@@ -89,7 +105,7 @@ data "template_file" "master_user_data" {
   template = "${file("${path.module}/dns-user-data.sh")}"
 
   vars {
-    master              = true
+    master_ip           = ""
     dns_zone            = "${var.dns_zone}"
     forward_dns_servers = "${var.forward_dns_servers}"
     query_cidrs         = "${var.query_cidrs}"
@@ -101,7 +117,7 @@ data "template_file" "slave_user_data" {
   template = "${file("${path.module}/dns-user-data.sh")}"
 
   vars {
-    master              = ""
+    master_ip           = "${aws_instance.master.private_ip}"
     dns_zone            = "${var.dns_zone}"
     forward_dns_servers = "${var.forward_dns_servers}"
     query_cidrs         = "${var.query_cidrs}"

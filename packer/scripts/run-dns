@@ -11,20 +11,17 @@ readonly SCRIPT_NAME="$(basename "$0")"
 
 function print_usage {
   echo
-  echo "Usage: backup-consul [OPTIONS]"
+  echo "Usage: run-dns [OPTIONS]"
   echo
-  echo "This script is used to execute a backup of Consul on an AWS server and store that backup in an S3 bucket."
+  echo "This script is used to configure and run the named service."
   echo
   echo "Options:"
   echo
-  echo -e "  --s3-bucket\t\tThe name of the S3 bucket to store the backup in, specified in the format s3://mybucket/myprefix/myobject. Required."
-  echo -e "  --schedule\t\tThe cron schedule string. Optional. Defaults to '0 0 * * *', which schedules the backups to run once a day at midnight."
-  echo -e "  --log-dir\t\tThe directory to place log files. Optional. Default is the absolute path of '../log', relative to this script."
-  echo -e "  --backup-file\t\tFile location of the Consul backup file. Optional. Default is the absolute path of '../consul-backup/backup.snap', relative to this script."
-  echo
-  echo "Example:"
-  echo
-  echo "  backup-consul --s3-bucket=s3://mybucket/myprefix/myobject"
+  echo -e "  --dns-zone\t\tName of the dns zone. Required."
+  echo -e "  --forward-dns-servers\t\tIP adresses of DNS servers to forward outside requests to. Required."
+  echo -e "  --query-cidrs\t\tIP block that can query the DNS service. Required."
+  echo -e "  --zone-update-cidrs\t\IP blocks that can issue zone updates. Defaults to only allow zone updates from localhost."
+  echo -e "  --master-ip\t\tIP address of the master DNS server. Supplying this will setup this DNS server as a slave to the provided master IP."
 }
 
 #################################################################################################
@@ -92,14 +89,26 @@ function get_owner_of_path {
 # CORE FUNCTIONS
 #################################################################################################
 
-function configure_named_master {
+function configure_named {
   local readonly zone="$1"
   local readonly forward_dns_server="$2"
   local readonly query_cidrs="$3"
   local readonly zone_update_cidrs="$4"
+  local readonly master_ip="$5"
   local readonly serial=`date "+%Y%m%d"`
 
-  log_info "Configuring Master DNS Server"
+  #Default to slave
+  local node_type="slave"
+  local allow_update=""
+  local master="masters { $master_ip; };"
+
+  if [[ -z "$master_ip" ]]; then
+    node_type="master"
+    allow_update="allow-update { 127.0.0.1;$zone_update_cidrs };"
+    master=""
+  fi
+
+  log_info "Configuring Slave DNS Server"
   cat > '/etc/named.conf' <<EOF
 options {
         listen-on port 53 { any; };
@@ -137,14 +146,14 @@ zone "." IN {
 };
 
 zone "$zone" IN {
-        type master;
-        file "/var/named/dynamic/$zone.zone-master";
-        allow-update { 127.0.0.1;$zone_update_cidrs };
+        type $node_type;
+        file "/var/named/dynamic/$zone.zone-$node_type";
+        $allow_update
+        $master
 };
 EOF
 
-#
-cat > "/var/named/dynamic/$zone.zone-master" <<EOF
+cat > "/var/named/dynamic/$zone.zone-$node_type" <<EOF
 \$TTL 86400
 @   IN  SOA     ns1.$zone. root.$zone (
         $serial     ;Serial
@@ -166,8 +175,17 @@ ns2             IN      A               0.0.0.0
 @               IN      A               0.0.0.0
 EOF
 
+  #Backup the original zone file
+  cp "/var/named/dynamic/$zone.zone-$node_type" "/var/named/dynamic/$zone.zone-$node_type.original"
+
   #Restart named service
   sudo systemctl restart named.service
+}
+
+# Setup cron job to update zone with C-name entries for our instances
+function configure_zone_updates {
+  # Create shell script
+  
 }
 
 function update_dhcp {
@@ -181,7 +199,7 @@ function run {
   local forward_dns_servers=""
   local query_cidrs=""
   local zone_update_cidrs=""
-  local master="false"
+  local master_ip=""
   local all_args=()
 
   while [[ $# > 0 ]]; do
@@ -207,8 +225,9 @@ function run {
         zone_update_cidrs="$2"
         shift
         ;;
-      --master)
-        master="true"
+      --master-ip)
+        master_ip="$2"
+        shift
         ;;
       --help)
         print_usage
@@ -237,11 +256,10 @@ function run {
     exit 1
   fi
 
-  #assert_is_installed "aws"
-  #assert_is_installed "curl"
-  #assert_is_installed "jq"
-
-  configure_named_master "$zone" "$forward_dns_servers" "$query_cidrs" "$zone_update_cidrs"
+  configure_named "$zone" "$forward_dns_servers" "$query_cidrs" "$zone_update_cidrs" "$master_ip"
+  if [[ -z "$master_ip" ]]; then
+    configure_zone_updates
+  fi
   update_dhcp
 }
 
