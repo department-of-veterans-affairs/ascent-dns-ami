@@ -95,20 +95,23 @@ function configure_named {
   local readonly query_cidrs="$3"
   local readonly zone_update_cidrs="$4"
   local readonly master_ip="$5"
-  local readonly serial=`date "+%Y%m%d"`
 
   #Default to slave
   local node_type="slave"
   local allow_update=""
   local master="masters { $master_ip; };"
+  local serial=`date "+%m%d%H%M"`
+  local filename="/var/named/dynamic/$zone.zone-$node_type"
 
   if [[ -z "$master_ip" ]]; then
     node_type="master"
     allow_update="allow-update { 127.0.0.1;$zone_update_cidrs };"
     master=""
+    serial='$serial'
+    filename="/var/named/dynamic/$zone.zone-$node_type.original"
   fi
 
-  log_info "Configuring Slave DNS Server"
+  log_info "Configuring DNS Server"
   cat > '/etc/named.conf' <<EOF
 options {
         listen-on port 53 { any; };
@@ -153,7 +156,7 @@ zone "$zone" IN {
 };
 EOF
 
-cat > "/var/named/dynamic/$zone.zone-$node_type" <<EOF
+cat > "$filename" <<EOF
 \$TTL 86400
 @   IN  SOA     ns1.$zone. root.$zone (
         $serial     ;Serial
@@ -175,8 +178,10 @@ ns2             IN      A               0.0.0.0
 @               IN      A               0.0.0.0
 EOF
 
-  #Backup the original zone file
-  cp "/var/named/dynamic/$zone.zone-$node_type" "/var/named/dynamic/$zone.zone-$node_type.original"
+  #Execute our zone update script to generate C-name entries
+  if [[ -z "$master_ip" ]]; then
+    /opt/dns/zone-update $zone false
+  fi
 
   #Restart named service
   sudo systemctl restart named.service
@@ -184,8 +189,10 @@ EOF
 
 # Setup cron job to update zone with C-name entries for our instances
 function configure_zone_updates {
-  # Create shell script
-  
+  local readonly zone="$1"
+
+  #Schedule to run every hour
+  echo "0 * * * * /opt/dns/zone-update $zone >> /root/update_bind_conf.log" >> /var/spool/cron/root
 }
 
 function update_dhcp {
@@ -256,10 +263,15 @@ function run {
     exit 1
   fi
 
-  configure_named "$zone" "$forward_dns_servers" "$query_cidrs" "$zone_update_cidrs" "$master_ip"
+  assert_is_installed "aws"
+  assert_is_installed "curl"
+  assert_is_installed "jq"
+
   if [[ -z "$master_ip" ]]; then
-    configure_zone_updates
+    configure_zone_updates "$zone"
   fi
+  configure_named "$zone" "$forward_dns_servers" "$query_cidrs" "$zone_update_cidrs" "$master_ip"
+  
   update_dhcp
 }
 

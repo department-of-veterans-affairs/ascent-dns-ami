@@ -16,6 +16,7 @@ resource "aws_instance" "master" {
   key_name                    = "${var.ssh_key_name}"
   subnet_id                   = "${var.subnet_ids[length(var.subnet_ids) - 1]}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
+  iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
   user_data                   = "${var.user_data == "" ? data.template_file.master_user_data.rendered : var.user_data}"
@@ -32,6 +33,7 @@ resource "aws_instance" "slave" {
   key_name                    = "${var.ssh_key_name}"
   subnet_id                   = "${var.subnet_ids[count.index]}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
+  iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
   user_data                   = "${var.user_data == "" ? data.template_file.slave_user_data.rendered : var.user_data}"
@@ -123,4 +125,43 @@ data "template_file" "slave_user_data" {
     query_cidrs         = "${var.query_cidrs}"
     zone_update_cidrs   = "${var.zone_update_cidrs}"
   }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# ATTACH AN IAM ROLE TO EACH EC2 INSTANCE
+# We can use the IAM role to grant the instance IAM permissions so we can use the AWS CLI without having to figure out
+# how to get our secret AWS access keys onto the box.
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "aws_iam_instance_profile" "instance_profile" {
+  name_prefix = "${var.cluster_name}"
+  path        = "${var.instance_profile_path}"
+  role        = "${aws_iam_role.instance_role.name}"
+}
+
+resource "aws_iam_role" "instance_role" {
+  name_prefix        = "${var.cluster_name}"
+  assume_role_policy = "${data.aws_iam_policy_document.instance_role.json}"
+}
+
+data "aws_iam_policy_document" "instance_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# THE IAM POLICIES COME FROM THE CONSUL-IAM-POLICIES MODULE
+# ---------------------------------------------------------------------------------------------------------------------
+
+module "iam_policies" {
+  source = "../dns-iam-policies"
+
+  iam_role_id = "${aws_iam_role.instance_role.id}"
 }

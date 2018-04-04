@@ -24,19 +24,19 @@ INSTANCES=`aws ec2 describe-instances --filters "Name=tag:SAN,Values=*" "Name=in
     echo $SANLIST
     for SAN in $SANLIST
     do
-      echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  /root/internal.vets-api.zone-master
+      echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  "/var/named/dynamic/$zone.zone-$node_type.original"
     done
   done
 
-SERIAL=`date "+%Y%m%d%H%M%S"`
+SERIAL=`date "+%Y%m%d%H%M"`
 echo $SERIAL
-sed -i -e 's/0123456789/'$SERIAL'/g' /root/internal.vets-api.zone-master
+sed -i -e 's/$serial/'$SERIAL'/g' "/var/named/dynamic/$zone.zone-$node_type.original"
 
 #freeze the zone so we can manually update the zone config
 rndc freeze internal.vets-api.gov.
 
 #copy updated zone config to dynamic folder so bind will pick it up
-cp /root/internal.vets-api.zone-master /var/named/dynamic/
+cp "/var/named/dynamic/$zone.zone-$node_type.original" "/var/named/dynamic/$zone.zone-$node_type"
 
 #thaw the zone to allow dynamic updates again
 rndc thaw internal.vets-api.gov.

@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -e
+
+ZONE="$1"
+FREEZE="$2"
+SERIAL=`date "+%m%d%H%M"`
+
+if [[ -z "$FREEZE" ]]; then
+  FREEZE="true"
+fi
+
+AWS_REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r '.region'`
+#grab all intanceIDs with tag SAN and in running or stopped state
+INSTANCES=`aws ec2 describe-instances --region $AWS_REGION --filters "Name=tag:SAN,Values=*" "Name=instance-state-name,Values=running,stopped" | jq .Reservations[].Instances[].InstanceId |sed 's/\"//g'`
+
+#freeze the zone so we can manually update the zone config
+if [[ $FREEZE == "true" ]]; then
+  rndc freeze $ZONE.
+fi
+
+#copy updated zone config to dynamic folder so bind will pick it up
+cp "/var/named/dynamic/$ZONE.zone-master.original" "/var/named/dynamic/$ZONE.zone-master"
+sed -i -e 's/$serial/'$SERIAL'/g' "/var/named/dynamic/$ZONE.zone-master"  
+
+echo $INSTANCES
+INSTANCE_LIST=$(echo $INSTANCES | tr "," "\n")
+for INSTANCE in $INSTANCE_LIST
+do
+  #pull private dns name to use in update
+  PRIVATEDNSNAME=`aws ec2 describe-instances --instance-id $INSTANCE --region $AWS_REGION | jq .Reservations[].Instances[].PrivateDnsName |sed 's/\"//g'`
+
+  #pull the SAN names for an instance
+  AWSSANS=`aws ec2 describe-instances  --instance-ids $INSTANCE --region $AWS_REGION | jq '.Reservations[] | .Instances[] | [(.Tags|from_entries|.SAN)]' |sed 's/\"//g' | sed 's/\]//g' | sed 's/\[//g'`
+
+  echo $AWSSAN
+  echo $PRIVATEDNSNAME
+
+  SANLIST=$(echo $AWSSANS | tr "," "\n")
+  echo $SANLIST
+  for SAN in $SANLIST
+  do
+    echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  "/var/named/dynamic/$ZONE.zone-master"
+  done
+done
+
+#thaw the zone to allow dynamic updates again
+if [[ $FREEZE == "true" ]]; then
+  rndc thaw $ZONE.
+fi
