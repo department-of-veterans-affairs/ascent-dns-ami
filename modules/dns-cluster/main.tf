@@ -17,6 +17,7 @@ resource "aws_instance" "master" {
   subnet_id                   = "${var.subnet_ids[length(var.subnet_ids) - 1]}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
+  private_ip                  = "${var.master_ip}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
   user_data                   = "${var.user_data == "" ? data.template_file.master_user_data.rendered : var.user_data}"
@@ -34,6 +35,7 @@ resource "aws_instance" "slave" {
   subnet_id                   = "${var.subnet_ids[count.index]}"
   associate_public_ip_address = "${var.associate_public_ip_address}"
   iam_instance_profile        = "${aws_iam_instance_profile.instance_profile.name}"
+  private_ip                  = "${var.slave_ip}"
 
   vpc_security_group_ids      = ["${aws_security_group.dns_security_group.id}"]
   user_data                   = "${var.user_data == "" ? data.template_file.slave_user_data.rendered : var.user_data}"

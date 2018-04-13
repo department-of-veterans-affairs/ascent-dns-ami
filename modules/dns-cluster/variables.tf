@@ -58,6 +58,16 @@ variable "user_data" {
   default = ""
 }
 
+variable "master_ip" {
+  description = "Private IP to assign to the master DNS server. Default to dynamic IP address"
+  default = ""
+}
+
+variable "slave_ip" {
+  description = "Private IPs to assign to the slave DNS servers. Default to dynamic IP address"
+  default = ""
+}
+
 variable "slave_size" {
   description = "The number of slave nodes to have in the DNS cluster. We strongly recommended that you use at least 1."
   default     = 1
