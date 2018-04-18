@@ -16,6 +16,8 @@ data "aws_iam_policy_document" "discover_nodes" {
       "ec2:DescribeInstances",
       "ec2:DescribeTags",
       "autoscaling:DescribeAutoScalingGroups",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "elasticloadbalancing:DescribeTags",
     ]
 
     resources = ["*"]

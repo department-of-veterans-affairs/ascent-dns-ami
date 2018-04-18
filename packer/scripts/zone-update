@@ -16,6 +16,16 @@ INSTANCES=`aws ec2 describe-instances --region $AWS_REGION --filters "Name=tag:S
 
 #freeze the zone so we can manually update the zone config
 if [[ $FREEZE == "true" ]]; then
+  #freeze the zone so we can manually update the zone config
+  rndc freeze $ZONE.
+
+  #reload zone to push updates out of jnl file
+  rndc reload $ZONE.
+
+  #thaw the zone to allow dynamic updates again
+  rndc thaw $ZONE.
+
+  #freeze the zone so we can manually update the zone config
   rndc freeze $ZONE.
 fi
 
@@ -23,7 +33,7 @@ fi
 cp "/var/named/dynamic/$ZONE.zone-master.original" "/var/named/dynamic/$ZONE.zone-master"
 sed -i -e 's/$serial/'$SERIAL'/g' "/var/named/dynamic/$ZONE.zone-master"  
 
-echo $INSTANCES
+echo "Instances: $INSTANCES"
 INSTANCE_LIST=$(echo $INSTANCES | tr "," "\n")
 for INSTANCE in $INSTANCE_LIST
 do
@@ -43,6 +53,31 @@ do
     echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  "/var/named/dynamic/$ZONE.zone-master"
   done
 done
+
+#grab all ELBs with SAN tag
+ELBS=`aws elb describe-load-balancers --region $AWS_REGION | jq  '.LoadBalancerDescriptions[]  | .LoadBalancerName' |sed 's/\"//g'`
+
+echo "ELBs: $ELBS"
+ELB_LIST=$(echo $ELBS | tr "," "\n")
+for ELB in $ELB_LIST
+ do
+   #see if ELB has SAN tag
+   AWSSANS=`aws elb describe-tags --load-balancer-names $ELB --region $AWS_REGION | jq -r '.TagDescriptions[] | [(.Tags|from_entries|.SAN)]' |sed 's/\"//g' | sed 's/\]//g' | sed 's/\[//g'`
+   if [ $AWSSANS == null ]
+   then
+     echo "No SAN Tag found. script will exit and not add this server to DNS"
+   else
+     SANLIST=$(echo $AWSSANS | tr "," "\n")
+     echo "Adding C-name entries ($SANLIST) for ELB $ELB"
+
+     for SAN in $SANLIST
+     do
+       SAN=$(echo $SAN |  awk -F. '{print $1}')
+       PRIVATEDNSNAME=`aws elb describe-load-balancers --load-balancer-name $ELB --region $AWS_REGION | jq -r '.LoadBalancerDescriptions[] | .DNSName'`
+       echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  "/var/named/dynamic/$ZONE.zone-master"
+     done
+   fi
+ done
 
 #thaw the zone to allow dynamic updates again
 if [[ $FREEZE == "true" ]]; then
