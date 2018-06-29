@@ -160,10 +160,10 @@ cat > "$filename" <<EOF
 \$TTL 86400
 @   IN  SOA     ns1.$zone. root.$zone (
         $serial     ;Serial
-        3600        ;Refresh
-        1800        ;Retry
+        300         ;Refresh
+        120         ;Retry
         604800      ;Expire
-        86400       ;Minimum TTL
+        300         ;Minimum TTL
 )
 
 ; Specify our two nameservers
