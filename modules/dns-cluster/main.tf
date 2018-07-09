@@ -70,6 +70,7 @@ resource "aws_security_group_rule" "allow_ssh_inbound" {
   security_group_id = "${aws_security_group.dns_security_group.id}"
 }
 
+
 resource "aws_security_group_rule" "allow_ssh_inbound_from_security_group_ids" {
   count                    = "${length(var.allowed_ssh_security_group_ids)}"
   type                     = "ingress"
@@ -97,6 +98,7 @@ module "security_group_rules" {
   security_group_id                  = "${aws_security_group.dns_security_group.id}"
   allowed_inbound_cidr_blocks        = ["${var.allowed_inbound_cidr_blocks}"]
   allowed_inbound_security_group_ids = ["${var.allowed_inbound_security_group_ids}"]
+  allowed_monitor_cidr_blocks        = ["${var.allowed_monitor_cidr_blocks}"]
 
   dns_port        = "${var.dns_port}"
 }
