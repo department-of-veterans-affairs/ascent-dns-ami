@@ -26,17 +26,6 @@ resource "aws_security_group_rule" "allow_dns_tcp_inbound" {
   security_group_id = "${var.security_group_id}"
 }
 
-resource "aws_security_group_rule" "allow_inbound_tcp_from_monitor_server" {
-  count       = "${length(var.allowed_monitor_cidr_blocks) >= 1 ? 1 : 0}"
-  type      = "ingress"
-  from_port = "${var.monitor_port}"
-  to_port   = "${var.monitor_port}"
-  protocol  = "tcp"
-  cidr_blocks = ["${var.allowed_monitor_cidr_blocks}"]
-
-  security_group_id = "${var.security_group_id}"
-}
-
 resource "aws_security_group_rule" "allow_dns_tcp_inbound_from_security_group_ids" {
   count                    = "${length(var.allowed_inbound_security_group_ids)}"
   type                     = "ingress"

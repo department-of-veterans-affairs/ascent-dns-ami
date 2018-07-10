@@ -78,13 +78,6 @@ variable "ssh_key_name" {
   default     = ""
 }
 
-variable "allowed_monitor_cidr_blocks" {
-  description = "A list of CIDR-formatted IP address ranges from which the EC2 Instances will allow connections from monitor server"
-  type        = "list"
-  default     = []
-}
-
-
 variable "allowed_ssh_cidr_blocks" {
   description = "A list of CIDR-formatted IP address ranges from which the EC2 Instances will allow SSH connections"
   type        = "list"

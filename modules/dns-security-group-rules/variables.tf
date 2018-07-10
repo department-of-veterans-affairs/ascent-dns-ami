@@ -11,11 +11,6 @@ variable "allowed_inbound_cidr_blocks" {
   type        = "list"
 }
 
-variable "allowed_monitor_cidr_blocks" {
-  description = "A list of CIDR-formatted IP address ranges from which the EC2 Instances will allow connections from monitor server"
-  type        = "list"
-}
-
 
 ###############################################################################
 # OPTIONAL VARIABLES
@@ -32,8 +27,4 @@ variable "dns_port" {
   default     = 53
 }
 
-variable "monitor_port" {
-  description = "TCP port for monitoring."
-  default     = 9100
-}
 
