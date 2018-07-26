@@ -50,6 +50,7 @@ do
   echo $SANLIST
   for SAN in $SANLIST
   do
+    SAN=$(echo $SAN |  awk -F. '{print $1}')
     echo $SAN" IN  CNAME "$PRIVATEDNSNAME"." >>  "/var/named/dynamic/$ZONE.zone-master"
   done
 done
