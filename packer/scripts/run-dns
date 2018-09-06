@@ -154,6 +154,12 @@ zone "$zone" IN {
         $allow_update
         $master
 };
+
+zone "va.gov" IN {
+        type forward;
+        forwarders { 10.204.1.20; };
+        forward only;
+};
 EOF
 
 cat > "$filename" <<EOF
